@@ -1,11 +1,32 @@
 body {
     margin: 0;
     overflow: hidden;
-    background-color: #000;
+    background: linear-gradient(to bottom, #000000 0%, #0f172a 100%);
     color: white;
     font-family: 'Courier New', Courier, monospace;
     user-select: none;
     -webkit-user-select: none;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: twinkle var(--duration) ease-in-out infinite;
+    opacity: var(--opacity);
+}
+
+@keyframes twinkle {
+
+    0%,
+    100% {
+        opacity: var(--opacity);
+    }
+
+    50% {
+        opacity: 0.2;
+    }
 }
 
 #game-container {

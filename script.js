@@ -35,7 +35,7 @@ function colorToNumber(color) {
 
 // Initialize Pixi
 (async () => {
-    await app.init({ background: '#000000', resizeTo: window });
+    await app.init({ backgroundAlpha: 0, resizeTo: window });
     container.appendChild(app.canvas);
 
     // Generate Textures for each character (including progression chars)
@@ -276,3 +276,35 @@ function triggerEasterEgg() {
         }
     }, 100);
 }
+
+function createStarryBackground() {
+    const starCount = 150;
+
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+
+        // Random position
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+
+        // Random size
+        const size = Math.random() * 2 + 1;
+
+        // Random animation properties
+        const duration = Math.random() * 3 + 2;
+        const opacity = Math.random() * 0.7 + 0.3;
+
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.setProperty('--duration', `${duration}s`);
+        star.style.setProperty('--opacity', opacity);
+        star.style.animationDelay = `${Math.random() * 5}s`;
+
+        document.body.insertBefore(star, container);
+    }
+}
+
+createStarryBackground();
