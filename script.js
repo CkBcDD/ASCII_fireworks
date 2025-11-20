@@ -35,7 +35,11 @@ function colorToNumber(color) {
 
 // Initialize Pixi
 (async () => {
-    await app.init({ backgroundAlpha: 0, resizeTo: window });
+    await app.init({
+        backgroundAlpha: 0,
+        resizeTo: window,
+        background: 'transparent'
+    });
     container.appendChild(app.canvas);
 
     // Generate Textures for each character (including progression chars)
