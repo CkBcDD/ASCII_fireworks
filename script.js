@@ -8,8 +8,8 @@ let isEasterEggActive = false;
 let easterEggTimer = null;
 
 // Configuration
-const GRAVITY = 0.15;
-const FRICTION = 0.96;
+const GRAVITY = 0.08;
+const FRICTION = 0.99;
 const CHARS = ['*', '+', '.', 'o', 'x', '#', '@', '%', '&'];
 const COLORS = [
     '#FF0000', '#00FF00', '#0000FF',
@@ -39,7 +39,7 @@ function createFirework(x, y, forcedColor = null) {
 
     for (let i = 0; i < particleCount; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 5 + 2;
+        const speed = Math.random() * 3 + 2;
 
         const velocity = {
             x: Math.cos(angle) * speed,
@@ -59,7 +59,7 @@ class Particle {
         this.char = char;
         this.alpha = 1;
         this.life = 1.0;
-        this.decay = 0.01 + Math.random() * 0.02;
+        this.decay = 0.005 + Math.random() * 0.01;
 
         this.element = document.createElement('span');
         this.element.textContent = this.char;
