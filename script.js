@@ -6,6 +6,7 @@ let lastClickTime = 0;
 let combo = 0;
 let isEasterEggActive = false;
 let easterEggTimer = null;
+let audioCtx = null;
 
 // Configuration
 const GRAVITY = 0.08;
@@ -26,6 +27,7 @@ requestAnimationFrame(loop);
 
 // Event Listener
 document.addEventListener('mousedown', (e) => {
+    initAudio();
     if (isEasterEggActive) return; // Optional: disable manual clicks during easter egg or let them add to chaos
 
     createFirework(e.clientX, e.clientY);
@@ -33,11 +35,12 @@ document.addEventListener('mousedown', (e) => {
 });
 
 function createFirework(x, y, forcedColor = null) {
+    playExplosion();
     const particleCount = 30 + Math.random() * 20;
     const color = forcedColor || COLORS[Math.floor(Math.random() * COLORS.length)];
-    const char = CHARS[Math.floor(Math.random() * CHARS.length)];
 
     for (let i = 0; i < particleCount; i++) {
+        const char = CHARS[Math.floor(Math.random() * CHARS.length)];
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 3 + 2;
 
@@ -86,7 +89,7 @@ class Particle {
     }
 
     updateElement() {
-        this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
+        this.element.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.life})`;
         this.element.style.opacity = this.alpha;
     }
 
@@ -110,6 +113,50 @@ function updateParticles() {
             particles.splice(i, 1);
         }
     }
+}
+
+// Audio System
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function playExplosion() {
+    if (!audioCtx) return;
+
+    // Create white noise buffer
+    const bufferSize = audioCtx.sampleRate * 0.5; // 0.5 seconds
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+
+    const gainNode = audioCtx.createGain();
+
+    // Lowpass filter to make it sound like an explosion
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 800; // Muffled sound
+
+    noise.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    // Volume envelope
+    gainNode.gain.setValueAtTime(0.1, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+    noise.start(now);
 }
 
 // Combo & Easter Egg Logic
