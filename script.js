@@ -16,6 +16,8 @@ let audioCtx = null;
 const GRAVITY = 0.08;
 const FRICTION = 0.99;
 const CHARS = ['*', '+', '.', 'o', 'x', '#', '@', '%', '&'];
+// Character size progression (from largest to smallest)
+const CHAR_PROGRESSION = ['@', '#', '&', '%', 'O', 'o', '*', '+', 'x', '.'];
 const COLORS = [
     0xFF0000, 0x00FF00, 0x0000FF,
     0xFFFF00, 0x00FFFF, 0xFF00FF,
@@ -36,7 +38,7 @@ function colorToNumber(color) {
     await app.init({ background: '#000000', resizeTo: window });
     container.appendChild(app.canvas);
 
-    // Generate Textures for each character
+    // Generate Textures for each character (including progression chars)
     const style = new PIXI.TextStyle({
         fontFamily: 'Courier New',
         fontSize: 24,
@@ -44,7 +46,9 @@ function colorToNumber(color) {
         fontWeight: 'bold'
     });
 
-    CHARS.forEach(char => {
+    // Combine all unique characters
+    const allChars = [...new Set([...CHARS, ...CHAR_PROGRESSION])];
+    allChars.forEach(char => {
         const text = new PIXI.Text(char, style);
         charTextures[char] = app.renderer.generateTexture(text);
     });
@@ -88,10 +92,12 @@ class Particle {
         this.y = y;
         this.velocity = velocity;
         this.color = color;
+        this.initialChar = char;
         this.char = char;
         this.alpha = 1;
         this.life = 1.0;
         this.decay = 0.005 + Math.random() * 0.01;
+        this.currentCharIndex = 0; // Track position in character progression
 
         // Create Pixi Sprite
         this.sprite = new PIXI.Sprite(charTextures[char]);
@@ -112,7 +118,25 @@ class Particle {
         this.y += this.velocity.y;
 
         this.life -= this.decay;
-        this.alpha = this.life;
+
+        // Calculate character progression based on life
+        // As life decreases, progress through smaller characters
+        const progressionLength = CHAR_PROGRESSION.length;
+        const newCharIndex = Math.floor((1 - this.life) * progressionLength);
+
+        // Update character if it changed
+        if (newCharIndex !== this.currentCharIndex && newCharIndex < progressionLength) {
+            this.currentCharIndex = newCharIndex;
+            this.char = CHAR_PROGRESSION[newCharIndex];
+
+            // Update sprite texture
+            if (charTextures[this.char]) {
+                this.sprite.texture = charTextures[this.char];
+            }
+        }
+
+        // Alpha fades with life, creating transparency effect
+        this.alpha = Math.pow(this.life, 0.8); // Slight curve for smoother fade
 
         this.updateSprite();
     }
@@ -120,7 +144,9 @@ class Particle {
     updateSprite() {
         this.sprite.x = this.x;
         this.sprite.y = this.y;
-        this.sprite.scale.set(this.life); // Scale down as it dies
+        // Combine character shrinking with scale for enhanced effect
+        const scaleFactor = 0.7 + (this.life * 0.3); // Scale from 1.0 to 0.7
+        this.sprite.scale.set(scaleFactor);
         this.sprite.alpha = this.alpha;
     }
 
@@ -175,7 +201,7 @@ function playExplosion() {
     // Lowpass filter to make it sound like an explosion
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 1600; // Muffled sound
+    filter.frequency.value = 1200; // Muffled sound
 
     noise.connect(filter);
     filter.connect(gainNode);
