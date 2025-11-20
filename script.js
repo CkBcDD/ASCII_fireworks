@@ -1,34 +1,175 @@
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const asciiContainer = document.getElementById('ascii');
+const container = document.getElementById('game-container');
+const comboElement = document.getElementById('combo-counter');
 
-const image = new Image();
-image.src = 'path_to_your_image.png'; // Replace with the path to your image
-image.onload = () => {
-    canvas.width = image.width;
-    canvas.height = image.height;
-    ctx.drawImage(image, 0, 0);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const asciiArt = convertToAscii(imageData);
-    asciiContainer.textContent = asciiArt;
-};
+let particles = [];
+let lastClickTime = 0;
+let combo = 0;
+let isEasterEggActive = false;
+let easterEggTimer = null;
 
-function convertToAscii(imageData) {
-    const { width, height, data } = imageData;
-    const asciiCharacters = ' .:-=+*#%@';
-    let ascii = '';
+// Configuration
+const GRAVITY = 0.15;
+const FRICTION = 0.96;
+const CHARS = ['*', '+', '.', 'o', 'x', '#', '@', '%', '&'];
+const COLORS = [
+    '#FF0000', '#00FF00', '#0000FF',
+    '#FFFF00', '#00FFFF', '#FF00FF',
+    '#FFFFFF', '#FF8800', '#FF0088'
+];
 
-    for (let y = 0; y < height; y += 6) { // Adjust this value to control the height of ASCII characters
-        for (let x = 0; x < width; x += 3) { // Adjust this value to control the width of ASCII characters
-            const offset = (y * width + x) * 4;
-            const r = data[offset];
-            const g = data[offset + 1];
-            const b = data[offset + 2];
-            const avg = (r + g + b) / 3;
-            const charIndex = Math.floor((avg / 255) * (asciiCharacters.length - 1));
-            ascii += asciiCharacters[charIndex];
-        }
-        ascii += '\n';
+// Main Loop
+function loop() {
+    updateParticles();
+    requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Event Listener
+document.addEventListener('mousedown', (e) => {
+    if (isEasterEggActive) return; // Optional: disable manual clicks during easter egg or let them add to chaos
+
+    createFirework(e.clientX, e.clientY);
+    handleCombo();
+});
+
+function createFirework(x, y, forcedColor = null) {
+    const particleCount = 30 + Math.random() * 20;
+    const color = forcedColor || COLORS[Math.floor(Math.random() * COLORS.length)];
+    const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+
+    for (let i = 0; i < particleCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 5 + 2;
+
+        const velocity = {
+            x: Math.cos(angle) * speed,
+            y: Math.sin(angle) * speed
+        };
+
+        particles.push(new Particle(x, y, velocity, color, char));
     }
-    return ascii;
+}
+
+class Particle {
+    constructor(x, y, velocity, color, char) {
+        this.x = x;
+        this.y = y;
+        this.velocity = velocity;
+        this.color = color;
+        this.char = char;
+        this.alpha = 1;
+        this.life = 1.0;
+        this.decay = 0.01 + Math.random() * 0.02;
+
+        this.element = document.createElement('span');
+        this.element.textContent = this.char;
+        this.element.className = 'particle';
+        this.element.style.color = this.color;
+
+        // Initial position
+        this.updateElement();
+        container.appendChild(this.element);
+    }
+
+    update() {
+        this.velocity.x *= FRICTION;
+        this.velocity.y *= FRICTION;
+        this.velocity.y += GRAVITY;
+
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+
+        this.life -= this.decay;
+        this.alpha = this.life;
+
+        this.updateElement();
+    }
+
+    updateElement() {
+        this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
+        this.element.style.opacity = this.alpha;
+    }
+
+    isDead() {
+        return this.life <= 0;
+    }
+
+    remove() {
+        if (this.element.parentNode) {
+            this.element.parentNode.removeChild(this.element);
+        }
+    }
+}
+
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.update();
+        if (p.isDead()) {
+            p.remove();
+            particles.splice(i, 1);
+        }
+    }
+}
+
+// Combo & Easter Egg Logic
+function handleCombo() {
+    const now = Date.now();
+    const timeDiff = now - lastClickTime;
+    lastClickTime = now;
+
+    if (timeDiff < 400) { // Fast clicking threshold
+        combo++;
+        showComboUI();
+
+        if (combo >= 15 && !isEasterEggActive) {
+            triggerEasterEgg();
+        }
+    } else {
+        combo = 0;
+        hideComboUI();
+    }
+}
+
+function showComboUI() {
+    comboElement.style.display = 'block';
+    comboElement.textContent = `COMBO: ${combo}`;
+    comboElement.style.transform = `scale(${1 + combo * 0.05})`;
+
+    // Reset scale after a brief moment for a "pulse" effect
+    setTimeout(() => {
+        comboElement.style.transform = 'scale(1)';
+    }, 50);
+}
+
+function hideComboUI() {
+    comboElement.style.display = 'none';
+}
+
+function triggerEasterEgg() {
+    isEasterEggActive = true;
+    combo = 0;
+    hideComboUI();
+
+    // Create Easter Egg Text
+    const eggText = document.createElement('div');
+    eggText.className = 'easter-egg-text';
+    eggText.textContent = "ASCII\nOVERLOAD";
+    document.body.appendChild(eggText);
+
+    // Auto-fireworks sequence
+    let count = 0;
+    const maxFireworks = 50;
+    const interval = setInterval(() => {
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * window.innerHeight;
+        createFirework(x, y, '#00FF00'); // Matrix green style
+
+        count++;
+        if (count >= maxFireworks) {
+            clearInterval(interval);
+            document.body.removeChild(eggText);
+            isEasterEggActive = false;
+        }
+    }, 100);
 }
