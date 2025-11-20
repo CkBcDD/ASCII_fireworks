@@ -1,6 +1,10 @@
 const container = document.getElementById('game-container');
 const comboElement = document.getElementById('combo-counter');
 
+// Pixi Application
+const app = new PIXI.Application();
+let charTextures = {};
+
 let particles = [];
 let lastClickTime = 0;
 let combo = 0;
@@ -18,12 +22,27 @@ const COLORS = [
     '#FFFFFF', '#FF8800', '#FF0088'
 ];
 
-// Main Loop
-function loop() {
-    updateParticles();
-    requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
+// Initialize Pixi
+(async () => {
+    await app.init({ background: '#000000', resizeTo: window });
+    container.appendChild(app.canvas);
+
+    // Generate Textures for each character
+    const style = new PIXI.TextStyle({
+        fontFamily: 'Courier New',
+        fontSize: 24,
+        fill: '#ffffff', // White base for tinting
+        fontWeight: 'bold'
+    });
+
+    CHARS.forEach(char => {
+        const text = new PIXI.Text({ text: char, style });
+        charTextures[char] = text.texture;
+    });
+
+    // Start the game loop
+    app.ticker.add(updateParticles);
+})();
 
 // Event Listener
 document.addEventListener('mousedown', (e) => {
@@ -35,8 +54,9 @@ document.addEventListener('mousedown', (e) => {
 });
 
 function createFirework(x, y, forcedColor = null) {
+    if (Object.keys(charTextures).length === 0) return;
     playExplosion();
-    const particleCount = 30 + Math.random() * 20;
+    const particleCount = 100 + Math.random() * 20;
     const color = forcedColor || COLORS[Math.floor(Math.random() * COLORS.length)];
 
     for (let i = 0; i < particleCount; i++) {
@@ -64,14 +84,14 @@ class Particle {
         this.life = 1.0;
         this.decay = 0.005 + Math.random() * 0.01;
 
-        this.element = document.createElement('span');
-        this.element.textContent = this.char;
-        this.element.className = 'particle';
-        this.element.style.color = this.color;
+        // Create Pixi Sprite
+        this.sprite = new PIXI.Sprite(charTextures[char]);
+        this.sprite.anchor.set(0.5);
+        this.sprite.tint = this.color;
 
         // Initial position
-        this.updateElement();
-        container.appendChild(this.element);
+        this.updateSprite();
+        app.stage.addChild(this.sprite);
     }
 
     update() {
@@ -85,12 +105,14 @@ class Particle {
         this.life -= this.decay;
         this.alpha = this.life;
 
-        this.updateElement();
+        this.updateSprite();
     }
 
-    updateElement() {
-        this.element.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.life})`;
-        this.element.style.opacity = this.alpha;
+    updateSprite() {
+        this.sprite.x = this.x;
+        this.sprite.y = this.y;
+        this.sprite.scale.set(this.life); // Scale down as it dies
+        this.sprite.alpha = this.alpha;
     }
 
     isDead() {
@@ -98,9 +120,8 @@ class Particle {
     }
 
     remove() {
-        if (this.element.parentNode) {
-            this.element.parentNode.removeChild(this.element);
-        }
+        app.stage.removeChild(this.sprite);
+        this.sprite.destroy();
     }
 }
 
