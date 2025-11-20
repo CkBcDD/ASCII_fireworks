@@ -17,10 +17,19 @@ const GRAVITY = 0.08;
 const FRICTION = 0.99;
 const CHARS = ['*', '+', '.', 'o', 'x', '#', '@', '%', '&'];
 const COLORS = [
-    '#FF0000', '#00FF00', '#0000FF',
-    '#FFFF00', '#00FFFF', '#FF00FF',
-    '#FFFFFF', '#FF8800', '#FF0088'
+    0xFF0000, 0x00FF00, 0x0000FF,
+    0xFFFF00, 0x00FFFF, 0xFF00FF,
+    0xFFFFFF, 0xFF8800, 0xFF0088
 ];
+
+// Helper function to convert color (if needed)
+function colorToNumber(color) {
+    if (typeof color === 'number') return color;
+    if (typeof color === 'string') {
+        return parseInt(color.replace('#', ''), 16);
+    }
+    return 0xFFFFFF;
+}
 
 // Initialize Pixi
 (async () => {
@@ -31,13 +40,13 @@ const COLORS = [
     const style = new PIXI.TextStyle({
         fontFamily: 'Courier New',
         fontSize: 24,
-        fill: '#ffffff', // White base for tinting
+        fill: 0xffffff, // White base for tinting
         fontWeight: 'bold'
     });
 
     CHARS.forEach(char => {
-        const text = new PIXI.Text({ text: char, style });
-        charTextures[char] = text.texture;
+        const text = new PIXI.Text(char, style);
+        charTextures[char] = app.renderer.generateTexture(text);
     });
 
     // Start the game loop
@@ -87,7 +96,7 @@ class Particle {
         // Create Pixi Sprite
         this.sprite = new PIXI.Sprite(charTextures[char]);
         this.sprite.anchor.set(0.5);
-        this.sprite.tint = this.color;
+        this.sprite.tint = colorToNumber(this.color);
 
         // Initial position
         this.updateSprite();
@@ -166,7 +175,7 @@ function playExplosion() {
     // Lowpass filter to make it sound like an explosion
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 800; // Muffled sound
+    filter.frequency.value = 1600; // Muffled sound
 
     noise.connect(filter);
     filter.connect(gainNode);
@@ -231,7 +240,7 @@ function triggerEasterEgg() {
     const interval = setInterval(() => {
         const x = Math.random() * window.innerWidth;
         const y = Math.random() * window.innerHeight;
-        createFirework(x, y, '#00FF00'); // Matrix green style
+        createFirework(x, y, 0x00FF00); // Matrix green style
 
         count++;
         if (count >= maxFireworks) {
