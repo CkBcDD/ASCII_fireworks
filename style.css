@@ -1,6 +1,13 @@
+html {
+    height: 100%;
+    background: linear-gradient(to bottom, #000000 0%, #0f172a 100%);
+}
+
 body {
     margin: 0;
     overflow: hidden;
+    min-height: 100vh;
+    position: relative;
     background: linear-gradient(to bottom, #000000 0%, #0f172a 100%);
     color: white;
     font-family: 'Courier New', Courier, monospace;
@@ -36,12 +43,7 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: all;
-    z-index: 10;
     /* Ensure clicks are captured */
-}
-
-#game-container canvas {
-    background: transparent !important;
 }
 
 .particle {
