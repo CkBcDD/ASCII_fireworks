@@ -1,20 +1,12 @@
 /**
- * Combo system and Easter egg
+ * Combo system
  */
 import { CONFIG } from './config.js';
+import { getEasterEggState, triggerEasterEgg } from './easter-egg.js';
 
 let lastClickTime = 0;
 let combo = 0;
-let isEasterEggActive = false;
 const comboElement = document.getElementById('combo-counter');
-
-/**
- * Gets the current Easter egg state
- * @returns {boolean}
- */
-export function getEasterEggState() {
-    return isEasterEggActive;
-}
 
 /**
  * Handles combo tracking and Easter egg triggering
@@ -29,7 +21,9 @@ export function handleCombo(easterEggCallback) {
         combo++;
         showComboUI();
 
-        if (combo >= CONFIG.combo.EASTER_EGG_TRIGGER && !isEasterEggActive) {
+        if (combo >= CONFIG.combo.EASTER_EGG_TRIGGER && !getEasterEggState()) {
+            combo = 0;
+            hideComboUI();
             triggerEasterEgg(easterEggCallback);
         }
     } else {
@@ -63,39 +57,4 @@ function hideComboUI() {
     if (comboElement) {
         comboElement.style.display = 'none';
     }
-}
-
-/**
- * Triggers the Easter egg sequence with auto-fireworks
- * @param {Function} createFireworkCallback - Callback to create fireworks
- */
-function triggerEasterEgg(createFireworkCallback) {
-    isEasterEggActive = true;
-    combo = 0;
-    hideComboUI();
-
-    // Create Easter egg text element
-    const eggText = document.createElement('div');
-    eggText.className = 'easter-egg-text';
-    eggText.textContent = "ASCII\nOVERLOAD";
-    document.body.appendChild(eggText);
-
-    // Auto-fireworks sequence
-    let count = 0;
-    const interval = setInterval(() => {
-        if (count >= CONFIG.combo.AUTO_FIREWORKS_COUNT) {
-            clearInterval(interval);
-            if (eggText.parentNode) {
-                document.body.removeChild(eggText);
-            }
-            isEasterEggActive = false;
-            return;
-        }
-
-        const x = Math.random() * window.innerWidth;
-        const y = Math.random() * window.innerHeight;
-        createFireworkCallback(x, y, 0x00FF00); // Matrix green style
-
-        count++;
-    }, CONFIG.combo.AUTO_FIREWORKS_INTERVAL_MS);
 }

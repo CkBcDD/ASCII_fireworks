@@ -5,7 +5,8 @@
 import { initializePixi } from './pixi-init.js';
 import { createFirework, updateParticles } from './firework.js';
 import { initAudio } from './audio.js';
-import { handleCombo, getEasterEggState } from './combo.js';
+import { handleCombo } from './combo.js';
+import { getEasterEggState } from './easter-egg.js';
 import { createStarryBackground } from './background.js';
 
 // ==================== DOM Elements ====================
@@ -27,7 +28,7 @@ let charTextures = {};
 function handleMouseDown(event) {
     initAudio();
 
-    if (getEasterEggState()) return;
+    if (getEasterEggState() && !CONFIG.options.ALLOW_MOUSE_CLICK_DURING_EASTER_EGG) return;
 
     createFirework(event.clientX, event.clientY, charTextures, app);
     handleCombo((x, y, color) => createFirework(x, y, charTextures, app, color));

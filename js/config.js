@@ -51,4 +51,5 @@ export const CONFIG = {
         STAR_OPACITY_MIN: 0.3,
         STAR_OPACITY_MAX: 1.0,
     },
+    options: { ALLOW_MOUSE_CLICK_DURING_EASTER_EGG: true },
 };
