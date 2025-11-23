@@ -48,6 +48,43 @@ export function createFirework(x, y, charTextures, app, forcedColor = null) {
 }
 
 /**
+ * Creates a super firework with enhanced particles
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ * @param {Object} charTextures - Character texture map
+ * @param {Object} app - Pixi application instance
+ */
+export function createSuperFirework(x, y, charTextures, app) {
+    if (Object.keys(charTextures).length === 0) {
+        console.warn('Character textures not yet loaded');
+        return;
+    }
+
+    playExplosion();
+
+    const particleCount = CONFIG.superFirework.PARTICLE_COUNT;
+
+    for (let i = 0; i < particleCount; i++) {
+        const char = getRandomElement(CONFIG.characters.PARTICLE_CHARS);
+        const angle = Math.random() * Math.PI * 2;
+        const speed = getRandomNumber(
+            CONFIG.superFirework.SPEED_MIN,
+            CONFIG.superFirework.SPEED_MAX
+        );
+
+        const velocity = {
+            x: Math.cos(angle) * speed,
+            y: Math.sin(angle) * speed
+        };
+
+        // Use rainbow colors for super firework
+        const color = getRandomElement(CONFIG.colors);
+
+        particles.push(new Particle(x, y, velocity, color, char, charTextures, app));
+    }
+}
+
+/**
  * Updates all active particles in the system
  */
 export function updateParticles() {

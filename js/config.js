@@ -31,6 +31,14 @@ export const CONFIG = {
         AUTO_FIREWORKS_COUNT: 50,
         AUTO_FIREWORKS_INTERVAL_MS: 100,
     },
+    superFirework: {
+        PARTICLE_COUNT: 500,
+        SPEED_MIN: 3,
+        SPEED_MAX: 8,
+        DURATION_MS: 8000,
+        WAVE_COUNT: 5,
+        WAVE_INTERVAL_MS: 300,
+    },
     audio: {
         BUFFER_DURATION: 0.5,
         FILTER_FREQUENCY: 1200,

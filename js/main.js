@@ -3,10 +3,10 @@
  * A Pixi.js-based interactive fireworks display with ASCII characters
  */
 import { initializePixi } from './pixi-init.js';
-import { createFirework, updateParticles } from './firework.js';
+import { createFirework, createSuperFirework, updateParticles } from './firework.js';
 import { initAudio } from './audio.js';
 import { handleCombo } from './combo.js';
-import { getEasterEggState } from './easter-egg.js';
+import { getEasterEggState, initKeywordListener } from './easter-egg.js';
 import { createStarryBackground } from './background.js';
 
 // ==================== DOM Elements ====================
@@ -48,6 +48,9 @@ async function initializeApplication() {
         charTextures = result.charTextures;
 
         createStarryBackground(container);
+
+        // Initialize keyword listener for "fireworks" easter egg
+        initKeywordListener((x, y) => createSuperFirework(x, y, charTextures, app));
     } catch (error) {
         console.error('Failed to initialize application:', error);
     }
