@@ -1,28 +1,41 @@
+/* ===========================
+   Root & Base Styles
+   =========================== */
+
+:root {
+    /* Colors */
+    --color-bg-dark: #000000;
+    --color-bg-light: #0f172a;
+    --color-text-primary: #ffffff;
+    --color-accent-yellow: #ffff00;
+    --color-accent-green: #00ff00;
+
+    /* Effects */
+    --gradient-bg: linear-gradient(to bottom, var(--color-bg-dark) 0%, var(--color-bg-light) 100%);
+}
+
 html {
     height: 100%;
-    background: linear-gradient(to bottom, #000000 0%, #0f172a 100%);
+    background: var(--gradient-bg);
 }
 
 body {
     margin: 0;
+    padding: 0;
     overflow: hidden;
     min-height: 100vh;
     position: relative;
-    background: linear-gradient(to bottom, #000000 0%, #0f172a 100%);
-    color: white;
-    font-family: 'Courier New', Courier, monospace;
+    background: var(--gradient-bg);
+    color: var(--color-text-primary);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 16px;
     user-select: none;
     -webkit-user-select: none;
 }
 
-.star {
-    position: absolute;
-    background: white;
-    border-radius: 50%;
-    pointer-events: none;
-    animation: twinkle var(--duration) ease-in-out infinite;
-    opacity: var(--opacity);
-}
+/* ===========================
+   Animations
+   =========================== */
 
 @keyframes twinkle {
 
@@ -36,6 +49,34 @@ body {
     }
 }
 
+@keyframes pulse {
+    from {
+        text-shadow: 0 0 10px var(--color-accent-green);
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    to {
+        text-shadow: 0 0 20px var(--color-accent-green), 0 0 40px var(--color-accent-green);
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+/* ===========================
+   Component Styles
+   =========================== */
+
+.star {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--color-text-primary);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: twinkle var(--duration) ease-in-out infinite;
+    opacity: var(--opacity);
+}
+
+/* Game Container - Main interaction layer */
 #game-container {
     position: absolute;
     top: 0;
@@ -43,9 +84,9 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: all;
-    /* Ensure clicks are captured */
 }
 
+/* Particle - Individual effect elements */
 .particle {
     position: absolute;
     pointer-events: none;
@@ -53,6 +94,7 @@ body {
     will-change: transform, opacity;
 }
 
+/* UI Layer - HUD container */
 #ui-layer {
     position: absolute;
     top: 20px;
@@ -60,36 +102,27 @@ body {
     pointer-events: none;
 }
 
-#combo-counter {
-    font-size: 24px;
-    color: #ff0;
-    text-shadow: 0 0 5px #ff0;
-    font-weight: bold;
-    transition: transform 0.1s;
-}
-
+/* Easter Egg Text - Special event notification with pulse effect */
 .easter-egg-text {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
     font-size: 5vw;
-    color: #0f0;
-    text-shadow: 0 0 10px #0f0;
+    font-weight: bold;
+    color: var(--color-accent-green);
+    text-shadow: 0 0 10px var(--color-accent-green);
     white-space: pre;
     text-align: center;
     z-index: 100;
+    transform: translate(-50%, -50%);
     animation: pulse 0.5s infinite alternate;
 }
 
-@keyframes pulse {
-    from {
-        text-shadow: 0 0 10px #0f0;
-        transform: translate(-50%, -50%) scale(1);
-    }
-
-    to {
-        text-shadow: 0 0 20px #0f0, 0 0 40px #0f0;
-        transform: translate(-50%, -50%) scale(1.1);
-    }
+/* Combo Counter - Score indicator with color emphasis */
+#combo-counter {
+    font-size: 24px;
+    color: var(--color-accent-yellow);
+    text-shadow: 0 0 5px var(--color-accent-yellow);
+    font-weight: bold;
+    transition: transform 0.1s ease-out;
 }

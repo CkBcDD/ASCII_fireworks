@@ -1,30 +1,90 @@
+/**
+ * ASCII Fireworks Application
+ * A Pixi.js-based interactive fireworks display with ASCII characters
+ */
+
+// ==================== Constants ====================
+const CONFIG = {
+    physics: {
+        GRAVITY: 0.08,
+        FRICTION: 0.99,
+    },
+    particles: {
+        COUNT_MIN: 100,
+        COUNT_MAX: 120,
+        SPEED_MIN: 2,
+        SPEED_MAX: 5,
+        DECAY_MIN: 0.005,
+        DECAY_MAX: 0.015,
+        SCALE_MIN: 0.7,
+        SCALE_MAX: 1.0,
+    },
+    characters: {
+        PARTICLE_CHARS: ['*', '+', '.', 'o', 'x', '#', '@', '%', '&'],
+        PROGRESSION: ['@', '#', '&', '%', 'O', 'o', '*', '+', 'x', '.'],
+    },
+    colors: [
+        0xFF0000, 0x00FF00, 0x0000FF,
+        0xFFFF00, 0x00FFFF, 0xFF00FF,
+        0xFFFFFF, 0xFF8800, 0xFF0088
+    ],
+    combo: {
+        THRESHOLD_MS: 400,
+        EASTER_EGG_TRIGGER: 15,
+        AUTO_FIREWORKS_COUNT: 50,
+        AUTO_FIREWORKS_INTERVAL_MS: 100,
+    },
+    audio: {
+        BUFFER_DURATION: 0.5,
+        FILTER_FREQUENCY: 1200,
+        GAIN_INITIAL: 0.1,
+        GAIN_FINAL: 0.001,
+        EXPLOSION_DURATION: 0.5,
+    },
+    ui: {
+        COMBO_SCALE_FACTOR: 0.05,
+        PULSE_DURATION_MS: 50,
+    },
+    background: {
+        STAR_COUNT: 150,
+        STAR_SIZE_MIN: 1,
+        STAR_SIZE_MAX: 3,
+        STAR_ANIMATION_DURATION_MIN: 2,
+        STAR_ANIMATION_DURATION_MAX: 5,
+        STAR_OPACITY_MIN: 0.3,
+        STAR_OPACITY_MAX: 1.0,
+    },
+};
+
+// ==================== DOM Elements ====================
 const container = document.getElementById('game-container');
 const comboElement = document.getElementById('combo-counter');
 
-// Pixi Application
+if (!container) {
+    console.error('game-container not found in DOM');
+}
+if (!comboElement) {
+    console.error('combo-counter not found in DOM');
+}
+
+// ==================== Pixi Application ====================
 const app = new PIXI.Application();
 let charTextures = {};
 
+// ==================== Game State ====================
 let particles = [];
 let lastClickTime = 0;
 let combo = 0;
 let isEasterEggActive = false;
-let easterEggTimer = null;
 let audioCtx = null;
 
-// Configuration
-const GRAVITY = 0.08;
-const FRICTION = 0.99;
-const CHARS = ['*', '+', '.', 'o', 'x', '#', '@', '%', '&'];
-// Character size progression (from largest to smallest)
-const CHAR_PROGRESSION = ['@', '#', '&', '%', 'O', 'o', '*', '+', 'x', '.'];
-const COLORS = [
-    0xFF0000, 0x00FF00, 0x0000FF,
-    0xFFFF00, 0x00FFFF, 0xFF00FF,
-    0xFFFFFF, 0xFF8800, 0xFF0088
-];
+// ==================== Utility Functions ====================
 
-// Helper function to convert color (if needed)
+/**
+ * Converts a color to a numeric format
+ * @param {number|string} color - Color as number or hex string
+ * @returns {number} Numeric color value
+ */
 function colorToNumber(color) {
     if (typeof color === 'number') return color;
     if (typeof color === 'string') {
@@ -33,49 +93,111 @@ function colorToNumber(color) {
     return 0xFFFFFF;
 }
 
-// Initialize Pixi
-(async () => {
-    await app.init({ backgroundAlpha: 0, resizeTo: window });
-    container.appendChild(app.canvas);
+/**
+ * Gets a random element from an array
+ * @param {Array} arr - Array to select from
+ * @returns {*} Random element
+ */
+function getRandomElement(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
 
-    // Generate Textures for each character (including progression chars)
-    const style = new PIXI.TextStyle({
-        fontFamily: 'Courier New',
-        fontSize: 24,
-        fill: 0xffffff, // White base for tinting
-        fontWeight: 'bold'
-    });
+/**
+ * Gets a random number between min and max
+ * @param {number} min - Minimum value
+ * @param {number} max - Maximum value
+ * @returns {number} Random number
+ */
+function getRandomNumber(min, max) {
+    return Math.random() * (max - min) + min;
+}
 
-    // Combine all unique characters
-    const allChars = [...new Set([...CHARS, ...CHAR_PROGRESSION])];
-    allChars.forEach(char => {
-        const text = new PIXI.Text(char, style);
-        charTextures[char] = app.renderer.generateTexture(text);
-    });
+// ==================== Pixi Initialization ====================
 
-    // Start the game loop
-    app.ticker.add(updateParticles);
-})();
+/**
+ * Initializes the Pixi.js application and generates character textures
+ */
+async function initializePixi() {
+    try {
+        await app.init({ backgroundAlpha: 0, resizeTo: window });
 
-// Event Listener
-document.addEventListener('mousedown', (e) => {
+        if (!container) {
+            throw new Error('game-container element not found');
+        }
+
+        container.appendChild(app.canvas);
+
+        // Create text style for character generation
+        const style = new PIXI.TextStyle({
+            fontFamily: 'Courier New',
+            fontSize: 24,
+            fill: 0xffffff,
+            fontWeight: 'bold'
+        });
+
+        // Generate textures for all characters
+        const allChars = [...new Set([
+            ...CONFIG.characters.PARTICLE_CHARS,
+            ...CONFIG.characters.PROGRESSION
+        ])];
+
+        allChars.forEach(char => {
+            const text = new PIXI.Text(char, style);
+            charTextures[char] = app.renderer.generateTexture(text);
+        });
+
+        // Start the game loop
+        app.ticker.add(updateParticles);
+    } catch (error) {
+        console.error('Failed to initialize Pixi application:', error);
+    }
+}
+
+// ==================== Event Listeners ====================
+
+/**
+ * Handles mouse down events and creates fireworks
+ */
+function handleMouseDown(event) {
     initAudio();
-    if (isEasterEggActive) return; // Optional: disable manual clicks during easter egg or let them add to chaos
 
-    createFirework(e.clientX, e.clientY);
+    if (isEasterEggActive) return;
+
+    createFirework(event.clientX, event.clientY);
     handleCombo();
-});
+}
 
+document.addEventListener('mousedown', handleMouseDown);
+
+// ==================== Firework Creation ====================
+
+/**
+ * Creates a firework at the specified coordinates
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ * @param {number|null} forcedColor - Optional forced color for particles
+ */
 function createFirework(x, y, forcedColor = null) {
-    if (Object.keys(charTextures).length === 0) return;
+    if (Object.keys(charTextures).length === 0) {
+        console.warn('Character textures not yet loaded');
+        return;
+    }
+
     playExplosion();
-    const particleCount = 100 + Math.random() * 20;
-    const color = forcedColor || COLORS[Math.floor(Math.random() * COLORS.length)];
+
+    const particleCount = getRandomNumber(
+        CONFIG.particles.COUNT_MIN,
+        CONFIG.particles.COUNT_MAX
+    );
+    const color = forcedColor || getRandomElement(CONFIG.colors);
 
     for (let i = 0; i < particleCount; i++) {
-        const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+        const char = getRandomElement(CONFIG.characters.PARTICLE_CHARS);
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 3 + 2;
+        const speed = getRandomNumber(
+            CONFIG.particles.SPEED_MIN,
+            CONFIG.particles.SPEED_MAX
+        );
 
         const velocity = {
             x: Math.cos(angle) * speed,
@@ -86,7 +208,19 @@ function createFirework(x, y, forcedColor = null) {
     }
 }
 
+// ==================== Particle Class ====================
+
+/**
+ * Represents a single particle in the fireworks display
+ */
 class Particle {
+    /**
+     * @param {number} x - Initial X position
+     * @param {number} y - Initial Y position
+     * @param {Object} velocity - Velocity object with x and y
+     * @param {number} color - Numeric color value
+     * @param {string} char - Character to display
+     */
     constructor(x, y, velocity, color, char) {
         this.x = x;
         this.y = y;
@@ -96,136 +230,185 @@ class Particle {
         this.char = char;
         this.alpha = 1;
         this.life = 1.0;
-        this.decay = 0.005 + Math.random() * 0.01;
-        this.currentCharIndex = 0; // Track position in character progression
+        this.decay = getRandomNumber(
+            CONFIG.particles.DECAY_MIN,
+            CONFIG.particles.DECAY_MAX
+        );
+        this.currentCharIndex = 0;
 
-        // Create Pixi Sprite
+        // Create Pixi sprite
         this.sprite = new PIXI.Sprite(charTextures[char]);
         this.sprite.anchor.set(0.5);
         this.sprite.tint = colorToNumber(this.color);
 
-        // Initial position
         this.updateSprite();
         app.stage.addChild(this.sprite);
     }
 
+    /**
+     * Updates particle physics and appearance
+     */
     update() {
-        this.velocity.x *= FRICTION;
-        this.velocity.y *= FRICTION;
-        this.velocity.y += GRAVITY;
+        // Apply physics
+        this.velocity.x *= CONFIG.physics.FRICTION;
+        this.velocity.y *= CONFIG.physics.FRICTION;
+        this.velocity.y += CONFIG.physics.GRAVITY;
 
         this.x += this.velocity.x;
         this.y += this.velocity.y;
 
+        // Update life
         this.life -= this.decay;
 
-        // Calculate character progression based on life
-        // As life decreases, progress through smaller characters
-        const progressionLength = CHAR_PROGRESSION.length;
+        // Update character based on life progression
+        const progressionLength = CONFIG.characters.PROGRESSION.length;
         const newCharIndex = Math.floor((1 - this.life) * progressionLength);
 
-        // Update character if it changed
         if (newCharIndex !== this.currentCharIndex && newCharIndex < progressionLength) {
             this.currentCharIndex = newCharIndex;
-            this.char = CHAR_PROGRESSION[newCharIndex];
+            this.char = CONFIG.characters.PROGRESSION[newCharIndex];
 
-            // Update sprite texture
             if (charTextures[this.char]) {
                 this.sprite.texture = charTextures[this.char];
             }
         }
 
-        // Alpha fades with life, creating transparency effect
-        this.alpha = Math.pow(this.life, 0.8); // Slight curve for smoother fade
+        // Update alpha with smooth curve
+        this.alpha = Math.pow(this.life, 0.8);
 
         this.updateSprite();
     }
 
+    /**
+     * Updates sprite position, scale, and alpha
+     */
     updateSprite() {
         this.sprite.x = this.x;
         this.sprite.y = this.y;
-        // Combine character shrinking with scale for enhanced effect
-        const scaleFactor = 0.7 + (this.life * 0.3); // Scale from 1.0 to 0.7
+
+        const scaleFactor = CONFIG.particles.SCALE_MIN +
+            (this.life * (CONFIG.particles.SCALE_MAX - CONFIG.particles.SCALE_MIN));
+
         this.sprite.scale.set(scaleFactor);
         this.sprite.alpha = this.alpha;
     }
 
+    /**
+     * Checks if particle is no longer alive
+     * @returns {boolean} True if life <= 0
+     */
     isDead() {
         return this.life <= 0;
     }
 
+    /**
+     * Removes particle from stage and cleans up resources
+     */
     remove() {
         app.stage.removeChild(this.sprite);
         this.sprite.destroy();
     }
 }
 
+// ==================== Particle System ====================
+
+/**
+ * Updates all active particles in the system
+ */
 function updateParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.update();
-        if (p.isDead()) {
-            p.remove();
+        const particle = particles[i];
+        particle.update();
+
+        if (particle.isDead()) {
+            particle.remove();
             particles.splice(i, 1);
         }
     }
 }
 
-// Audio System
+// ==================== Audio System ====================
+
+/**
+ * Initializes the Web Audio API context
+ */
 function initAudio() {
     if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (error) {
+            console.error('Web Audio API not supported:', error);
+            return;
+        }
     }
+
     if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
+        audioCtx.resume().catch(error => {
+            console.error('Failed to resume audio context:', error);
+        });
     }
 }
 
+/**
+ * Plays an explosion sound effect using Web Audio API
+ */
 function playExplosion() {
     if (!audioCtx) return;
 
-    // Create white noise buffer
-    const bufferSize = audioCtx.sampleRate * 0.5; // 0.5 seconds
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
+    try {
+        // Create white noise buffer
+        const bufferSize = audioCtx.sampleRate * CONFIG.audio.BUFFER_DURATION;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
 
-    for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+
+        // Create audio nodes
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+
+        const gainNode = audioCtx.createGain();
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = CONFIG.audio.FILTER_FREQUENCY;
+
+        // Connect nodes
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        // Set volume envelope
+        const now = audioCtx.currentTime;
+        gainNode.gain.setValueAtTime(CONFIG.audio.GAIN_INITIAL, now);
+        gainNode.gain.exponentialRampToValueAtTime(
+            CONFIG.audio.GAIN_FINAL,
+            now + CONFIG.audio.EXPLOSION_DURATION
+        );
+
+        noise.start(now);
+    } catch (error) {
+        console.error('Failed to play explosion sound:', error);
     }
-
-    const noise = audioCtx.createBufferSource();
-    noise.buffer = buffer;
-
-    const gainNode = audioCtx.createGain();
-
-    // Lowpass filter to make it sound like an explosion
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1200; // Muffled sound
-
-    noise.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    const now = audioCtx.currentTime;
-    // Volume envelope
-    gainNode.gain.setValueAtTime(0.1, now);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-
-    noise.start(now);
 }
 
-// Combo & Easter Egg Logic
+// ==================== Combo System ====================
+
+/**
+ * Handles combo tracking and Easter egg triggering
+ */
 function handleCombo() {
     const now = Date.now();
     const timeDiff = now - lastClickTime;
     lastClickTime = now;
 
-    if (timeDiff < 400) { // Fast clicking threshold
+    if (timeDiff < CONFIG.combo.THRESHOLD_MS) {
         combo++;
         showComboUI();
 
-        if (combo >= 15 && !isEasterEggActive) {
+        if (combo >= CONFIG.combo.EASTER_EGG_TRIGGER && !isEasterEggActive) {
             triggerEasterEgg();
         }
     } else {
@@ -234,27 +417,44 @@ function handleCombo() {
     }
 }
 
+/**
+ * Displays the combo UI with scale animation
+ */
 function showComboUI() {
+    if (!comboElement) return;
+
     comboElement.style.display = 'block';
     comboElement.textContent = `COMBO: ${combo}`;
-    comboElement.style.transform = `scale(${1 + combo * 0.05})`;
+    comboElement.style.transform = `scale(${1 + combo * CONFIG.ui.COMBO_SCALE_FACTOR})`;
 
-    // Reset scale after a brief moment for a "pulse" effect
+    // Reset scale for pulse effect
     setTimeout(() => {
-        comboElement.style.transform = 'scale(1)';
-    }, 50);
+        if (comboElement) {
+            comboElement.style.transform = 'scale(1)';
+        }
+    }, CONFIG.ui.PULSE_DURATION_MS);
 }
 
+/**
+ * Hides the combo UI
+ */
 function hideComboUI() {
-    comboElement.style.display = 'none';
+    if (comboElement) {
+        comboElement.style.display = 'none';
+    }
 }
 
+// ==================== Easter Egg ====================
+
+/**
+ * Triggers the Easter egg sequence with auto-fireworks
+ */
 function triggerEasterEgg() {
     isEasterEggActive = true;
     combo = 0;
     hideComboUI();
 
-    // Create Easter Egg Text
+    // Create Easter egg text element
     const eggText = document.createElement('div');
     eggText.className = 'easter-egg-text';
     eggText.textContent = "ASCII\nOVERLOAD";
@@ -262,25 +462,31 @@ function triggerEasterEgg() {
 
     // Auto-fireworks sequence
     let count = 0;
-    const maxFireworks = 50;
     const interval = setInterval(() => {
+        if (count >= CONFIG.combo.AUTO_FIREWORKS_COUNT) {
+            clearInterval(interval);
+            if (eggText.parentNode) {
+                document.body.removeChild(eggText);
+            }
+            isEasterEggActive = false;
+            return;
+        }
+
         const x = Math.random() * window.innerWidth;
         const y = Math.random() * window.innerHeight;
         createFirework(x, y, 0x00FF00); // Matrix green style
 
         count++;
-        if (count >= maxFireworks) {
-            clearInterval(interval);
-            document.body.removeChild(eggText);
-            isEasterEggActive = false;
-        }
-    }, 100);
+    }, CONFIG.combo.AUTO_FIREWORKS_INTERVAL_MS);
 }
 
-function createStarryBackground() {
-    const starCount = 150;
+// ==================== Background Visualization ====================
 
-    for (let i = 0; i < starCount; i++) {
+/**
+ * Creates animated starry background
+ */
+function createStarryBackground() {
+    for (let i = 0; i < CONFIG.background.STAR_COUNT; i++) {
         const star = document.createElement('div');
         star.className = 'star';
 
@@ -289,11 +495,20 @@ function createStarryBackground() {
         const y = Math.random() * 100;
 
         // Random size
-        const size = Math.random() * 2 + 1;
+        const size = getRandomNumber(
+            CONFIG.background.STAR_SIZE_MIN,
+            CONFIG.background.STAR_SIZE_MAX
+        );
 
         // Random animation properties
-        const duration = Math.random() * 3 + 2;
-        const opacity = Math.random() * 0.7 + 0.3;
+        const duration = getRandomNumber(
+            CONFIG.background.STAR_ANIMATION_DURATION_MIN,
+            CONFIG.background.STAR_ANIMATION_DURATION_MAX
+        );
+        const opacity = getRandomNumber(
+            CONFIG.background.STAR_OPACITY_MIN,
+            CONFIG.background.STAR_OPACITY_MAX
+        );
 
         star.style.left = `${x}%`;
         star.style.top = `${y}%`;
@@ -307,4 +522,23 @@ function createStarryBackground() {
     }
 }
 
-createStarryBackground();
+// ==================== Application Startup ====================
+
+/**
+ * Initializes the entire application
+ */
+async function initializeApplication() {
+    try {
+        await initializePixi();
+        createStarryBackground();
+    } catch (error) {
+        console.error('Failed to initialize application:', error);
+    }
+}
+
+// Initialize the application when ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApplication);
+} else {
+    initializeApplication();
+}
