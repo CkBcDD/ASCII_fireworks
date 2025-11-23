@@ -39,13 +39,6 @@ export const CONFIG = {
         WAVE_COUNT: 5,
         WAVE_INTERVAL_MS: 300,
     },
-    audio: {
-        BUFFER_DURATION: 0.5,
-        FILTER_FREQUENCY: 1200,
-        GAIN_INITIAL: 0.1,
-        GAIN_FINAL: 0.001,
-        EXPLOSION_DURATION: 0.5,
-    },
     ui: {
         COMBO_SCALE_FACTOR: 0.05,
         PULSE_DURATION_MS: 50,
