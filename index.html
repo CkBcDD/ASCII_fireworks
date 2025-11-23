@@ -1,20 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="ASCII Fireworks" />
+    <meta name="theme-color" content="#000000" />
     <title>ASCII Fireworks</title>
-    <script src="https://pixijs.download/release/pixi.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
+    <!-- Preload external resources for better performance -->
+    <link rel="preload" as="script" href="https://pixijs.download/release/pixi.min.js" />
 </head>
 
 <body>
-    <div id="game-container"></div>
-    <div id="ui-layer">
-        <div id="combo-counter" style="display: none;">Combo: 0</div>
-    </div>
-    <script type="module" src="js/main.js"></script>
+    <main id="game-container" role="main" aria-label="Game container"></main>
+    <aside id="ui-layer" role="complementary" aria-label="UI controls">
+        <div id="combo-counter" class="combo-counter" hidden aria-live="polite" aria-label="Combo counter">
+            Combo: <span id="combo-value">0</span>
+        </div>
+    </aside>
+
+    <!-- Scripts -->
+    <script src="https://pixijs.download/release/pixi.min.js" defer></script>
+    <script type="module" src="js/main.js" defer></script>
+
+    <!-- No-script fallback -->
+    <noscript>
+        This application requires JavaScript to be enabled. Please enable JavaScript in your browser settings.
+    </noscript>
 </body>
 
 </html>
