@@ -10,6 +10,9 @@
     <link rel="stylesheet" href="style.css" />
     <!-- Preload external resources for better performance -->
     <link rel="preload" as="script" href="https://pixijs.download/release/pixi.min.js" />
+    <!-- Preload Tone.js so the library is fetched early but executed when available -->
+    <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"
+        crossorigin="anonymous" />
 </head>
 
 <body>
@@ -21,7 +24,8 @@
     </aside>
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Load Tone.js deferred so it doesn't block parsing but executes before DOMContentLoaded -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js" defer crossorigin="anonymous"></script>
     <script src="https://pixijs.download/release/pixi.min.js" defer></script>
     <script type="module" src="js/main.js" defer></script>
 
