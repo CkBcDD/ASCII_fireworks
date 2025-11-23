@@ -36,7 +36,7 @@ export const CONFIG = {
         SPEED_MIN: 3,
         SPEED_MAX: 8,
         DURATION_MS: 8000,
-        WAVE_COUNT: 5,
+        WAVE_COUNT: 10,
         WAVE_INTERVAL_MS: 300,
     },
     ui: {
