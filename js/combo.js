@@ -2,7 +2,7 @@
  * Combo system
  */
 import { CONFIG } from './config.js';
-import { getEasterEggState, triggerEasterEgg } from './easter-egg.js';
+import { getEasterEggState, triggerCombo } from './easter-egg.js';
 
 let lastClickTime = 0;
 let combo = 0;
@@ -21,10 +21,10 @@ export function handleCombo(easterEggCallback) {
         combo++;
         showComboUI();
 
-        if (combo >= CONFIG.combo.EASTER_EGG_TRIGGER && !getEasterEggState()) {
+        if (combo >= CONFIG.combo.COMBP_TRIGGER && !getEasterEggState()) {
             combo = 0;
             hideComboUI();
-            triggerEasterEgg(easterEggCallback);
+            triggerCombo(easterEggCallback);
         }
     } else {
         combo = 0;

@@ -21,7 +21,7 @@ export function getEasterEggState() {
  * Triggers the Easter egg sequence with auto-fireworks
  * @param {Function} createFireworkCallback - Callback to create fireworks
  */
-export function triggerEasterEgg(createFireworkCallback) {
+export function triggerCombo(createFireworkCallback) {
     isEasterEggActive = true;
 
     // Create Easter egg text element
@@ -44,7 +44,11 @@ export function triggerEasterEgg(createFireworkCallback) {
 
         const x = Math.random() * window.innerWidth;
         const y = Math.random() * window.innerHeight;
-        createFireworkCallback(x, y, 0x00FF00); // Matrix green style
+
+        // Use random colors for fireworks
+        const colors = CONFIG.colors;
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        createFireworkCallback(x, y, randomColor);
 
         count++;
     }, CONFIG.combo.AUTO_FIREWORKS_INTERVAL_MS);

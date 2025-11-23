@@ -27,7 +27,7 @@ export const CONFIG = {
     ],
     combo: {
         THRESHOLD_MS: 400,
-        EASTER_EGG_TRIGGER: 15,
+        COMBP_TRIGGER: 52,
         AUTO_FIREWORKS_COUNT: 50,
         AUTO_FIREWORKS_INTERVAL_MS: 100,
     },

@@ -8,6 +8,7 @@ import { initAudio } from './audio.js';
 import { handleCombo } from './combo.js';
 import { getEasterEggState, initKeywordListener } from './easter-egg.js';
 import { createStarryBackground } from './background.js';
+import { CONFIG } from './config.js';
 
 // ==================== DOM Elements ====================
 const container = document.getElementById('game-container');
