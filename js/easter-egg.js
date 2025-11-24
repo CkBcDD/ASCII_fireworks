@@ -109,7 +109,12 @@ export function initKeywordListener(createSuperFireworkCallback) {
         }
 
         // Add character to buffer
-        keywordBuffer += event.key.toLowerCase();
+        const key = event.key.toLowerCase();
+
+        // Only add single character keys to avoid special keys like "Shift", "Control", etc.
+        if (key.length === 1) {
+            keywordBuffer += key;
+        }
 
         // Clear timeout if exists
         if (keywordTimeout) {
