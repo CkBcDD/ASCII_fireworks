@@ -33,6 +33,7 @@ export class Particle {
         this.currentCharIndex = 0;
         this.charTextures = charTextures;
         this.app = app;
+        this.isActive = true;
 
         // Create Pixi sprite
         this.sprite = new PIXI.Sprite(charTextures[char]);
@@ -41,6 +42,40 @@ export class Particle {
 
         this.updateSprite();
         app.stage.addChild(this.sprite);
+    }
+
+    /**
+     * Resets particle state for object pool reuse
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {Object} velocity - Velocity object
+     * @param {number} color - Color value
+     * @param {string} char - Character to display
+     */
+    reset(x, y, velocity, color, char) {
+        this.x = x;
+        this.y = y;
+        this.velocity = velocity;
+        this.color = color;
+        this.initialChar = char;
+        this.char = char;
+        this.alpha = 1;
+        this.life = 1.0;
+        this.decay = getRandomNumber(
+            CONFIG.particles.DECAY_MIN,
+            CONFIG.particles.DECAY_MAX
+        );
+        this.currentCharIndex = 0;
+        this.isActive = true;
+
+        // Update sprite
+        if (this.charTextures[char]) {
+            this.sprite.texture = this.charTextures[char];
+        }
+        this.sprite.tint = colorToNumber(color);
+        this.sprite.visible = true;
+
+        this.updateSprite();
     }
 
     /**

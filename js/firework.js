@@ -3,10 +3,17 @@
  */
 import { CONFIG } from './config.js';
 import { getRandomElement, getRandomNumber } from './utils.js';
-import { Particle } from './particle.js';
 import { playExplosion } from './audio.js';
 
-let particles = [];
+let particlePool = null;
+
+/**
+ * Sets the particle pool instance
+ * @param {Object} pool - ParticlePool instance
+ */
+export function setParticlePool(pool) {
+    particlePool = pool;
+}
 
 /**
  * Creates a firework at the specified coordinates
@@ -19,6 +26,11 @@ let particles = [];
 export function createFirework(x, y, charTextures, app, forcedColor = null) {
     if (Object.keys(charTextures).length === 0) {
         console.warn('Character textures not yet loaded');
+        return;
+    }
+
+    if (!particlePool) {
+        console.error('Particle pool not initialized');
         return;
     }
 
@@ -43,7 +55,7 @@ export function createFirework(x, y, charTextures, app, forcedColor = null) {
             y: Math.sin(angle) * speed
         };
 
-        particles.push(new Particle(x, y, velocity, color, char, charTextures, app));
+        particlePool.acquire(x, y, velocity, color, char);
     }
 }
 
@@ -57,6 +69,11 @@ export function createFirework(x, y, charTextures, app, forcedColor = null) {
 export function createSuperFirework(x, y, charTextures, app) {
     if (Object.keys(charTextures).length === 0) {
         console.warn('Character textures not yet loaded');
+        return;
+    }
+
+    if (!particlePool) {
+        console.error('Particle pool not initialized');
         return;
     }
 
@@ -80,7 +97,7 @@ export function createSuperFirework(x, y, charTextures, app) {
         // Use rainbow colors for super firework
         const color = getRandomElement(CONFIG.colors);
 
-        particles.push(new Particle(x, y, velocity, color, char, charTextures, app));
+        particlePool.acquire(x, y, velocity, color, char);
     }
 }
 
@@ -88,13 +105,7 @@ export function createSuperFirework(x, y, charTextures, app) {
  * Updates all active particles in the system
  */
 export function updateParticles() {
-    for (let i = particles.length - 1; i >= 0; i--) {
-        const particle = particles[i];
-        particle.update();
-
-        if (particle.isDead()) {
-            particle.remove();
-            particles.splice(i, 1);
-        }
+    if (particlePool) {
+        particlePool.update();
     }
 }

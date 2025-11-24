@@ -3,12 +3,13 @@
  * A Pixi.js-based interactive fireworks display with ASCII characters
  */
 import { initializePixi } from './pixi-init.js';
-import { createFirework, createSuperFirework, updateParticles } from './firework.js';
+import { createFirework, createSuperFirework, updateParticles, setParticlePool } from './firework.js';
 import { initAudio } from './audio.js';
 import { handleCombo } from './combo.js';
 import { getEasterEggState, initKeywordListener } from './easter-egg.js';
 import { createStarryBackground } from './background.js';
 import { CONFIG } from './config.js';
+import { createPerformanceMonitor, togglePerformanceMonitor } from './performance-monitor.js';
 
 // ==================== DOM Elements ====================
 const container = document.getElementById('game-container');
@@ -20,6 +21,7 @@ if (!container) {
 // ==================== Global State ====================
 let app = null;
 let charTextures = {};
+let particlePool = null;
 
 // ==================== Event Handlers ====================
 
@@ -46,6 +48,17 @@ function handleMouseDown(event) {
 
 document.addEventListener('mousedown', handleMouseDown);
 
+// ==================== Performance Monitor Toggle ====================
+
+/**
+ * Toggle performance monitor with 'P' key
+ */
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'p' || event.key === 'P') {
+        togglePerformanceMonitor();
+    }
+});
+
 // ==================== Application Initialization ====================
 
 /**
@@ -56,11 +69,19 @@ async function initializeApplication() {
         const result = await initializePixi(container, updateParticles);
         app = result.app;
         charTextures = result.charTextures;
+        particlePool = result.particlePool;
+
+        // Set particle pool for firework system
+        setParticlePool(particlePool);
 
         createStarryBackground(container);
 
         // Initialize keyword listener for "fireworks" easter egg
         initKeywordListener((x, y) => createSuperFirework(x, y, charTextures, app));
+
+        // Initialize performance monitor (hidden by default, press 'P' to toggle)
+        createPerformanceMonitor(particlePool);
+        console.log('Press "P" to toggle performance monitor');
     } catch (error) {
         console.error('Failed to initialize application:', error);
     }

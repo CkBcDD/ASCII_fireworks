@@ -2,12 +2,13 @@
  * Pixi.js initialization
  */
 import { CONFIG } from './config.js';
+import { ParticlePool } from './particle-pool.js';
 
 /**
  * Initializes the Pixi.js application and generates character textures
  * @param {HTMLElement} container - Container element for the canvas
  * @param {Function} tickerCallback - Callback function for animation loop
- * @returns {Promise<{app: Object, charTextures: Object}>}
+ * @returns {Promise<{app: Object, charTextures: Object, particlePool: Object}>}
  */
 export async function initializePixi(container, tickerCallback) {
     const app = new PIXI.Application();
@@ -41,10 +42,14 @@ export async function initializePixi(container, tickerCallback) {
             charTextures[char] = app.renderer.generateTexture(text);
         });
 
+        // Initialize particle pool
+        const particlePool = new ParticlePool(1000, 2000, charTextures, app);
+        console.log('Particle pool initialized with 1000 particles');
+
         // Start the game loop
         app.ticker.add(tickerCallback);
 
-        return { app, charTextures };
+        return { app, charTextures, particlePool };
     } catch (error) {
         console.error('Failed to initialize Pixi application:', error);
         throw error;
