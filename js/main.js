@@ -30,8 +30,17 @@ function handleMouseDown(event) {
     initAudio();
 
     if (getEasterEggState() && !CONFIG.options.ALLOW_MOUSE_CLICK_DURING_EASTER_EGG) return;
-
+    // Create main firework at the click location
     createFirework(event.clientX, event.clientY, charTextures, app);
+
+    // If dual fireworks are enabled, spawn a second one with a small X offset
+    if (CONFIG.options.USING_DUAL_FIREWORKS) {
+        // Use a reasonable offset so they appear near each other but not overlapping
+        const offset = 40; // pixels
+        // Randomize left/right so the visual feels more dynamic
+        const secondX = event.clientX + (Math.random() < 0.5 ? -offset : offset);
+        createFirework(secondX, event.clientY, charTextures, app);
+    }
     handleCombo((x, y, color) => createFirework(x, y, charTextures, app, color));
 }
 
