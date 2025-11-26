@@ -79,9 +79,32 @@ async function initializeApplication() {
         // Initialize keyword listener for "fireworks" easter egg
         initKeywordListener((x, y) => createSuperFirework(x, y, charTextures, app));
 
-        // Initialize performance monitor (hidden by default, press 'P' to toggle)
-        createPerformanceMonitor(particlePool);
-        console.log('Press "P" to toggle performance monitor');
+        // Initialize performance monitor (visibility controlled by configuration and local preference, press 'P' to toggle)
+        // Check localStorage override for preference; fall back to CONFIG option
+        const prefKey = 'showPerformanceMonitor';
+        const storedPref = localStorage.getItem(prefKey);
+        const defaultVisible = storedPref !== null ? storedPref === 'true' : CONFIG.options.SHOW_PERFORMANCE_MONITOR;
+        createPerformanceMonitor(particlePool, defaultVisible);
+        console.log(`Press "P" to toggle performance monitor (default: ${CONFIG.options.SHOW_PERFORMANCE_MONITOR ? 'shown' : 'hidden'})`);
+
+        // Wire up UI preference checkbox (if present)
+        const perfCheckbox = document.getElementById('pref-show-performance');
+        if (perfCheckbox) {
+            perfCheckbox.checked = defaultVisible;
+            perfCheckbox.addEventListener('change', (e) => {
+                const checked = e.target.checked;
+                // Save preference
+                localStorage.setItem(prefKey, checked ? 'true' : 'false');
+                // Reflect immediately in the UI by setting display
+                const monitor = document.getElementById('performance-monitor');
+                if (monitor) {
+                    monitor.style.display = checked ? 'block' : 'none';
+                } else if (checked) {
+                    // If monitor doesn't exist (unlikely), create it
+                    createPerformanceMonitor(particlePool, true);
+                }
+            });
+        }
     } catch (error) {
         console.error('Failed to initialize application:', error);
     }

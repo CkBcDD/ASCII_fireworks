@@ -102,6 +102,19 @@ body {
     pointer-events: none;
 }
 
+/* Settings and UI controls container which needs pointer events enabled */
+.ui-controls {
+    pointer-events: auto;
+    margin-top: 8px;
+    color: var(--color-text-primary);
+    font-size: 14px;
+}
+
+.ui-controls input[type='checkbox'] {
+    transform: translateY(2px);
+    margin-right: 6px;
+}
+
 /* Easter Egg Text - Special event notification with pulse effect */
 .easter-egg-text {
     position: absolute;

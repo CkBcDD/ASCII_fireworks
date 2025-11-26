@@ -107,6 +107,9 @@ const BACKGROUND = Object.freeze({
 const OPTIONS = Object.freeze({
     ALLOW_MOUSE_CLICK_DURING_EASTER_EGG: true,
     USING_DUAL_FIREWORKS: true,
+    // Controls whether the performance monitor should be visible when the app initializes.
+    // Set to `true` to show the monitor by default, `false` to keep it hidden until toggled (default).
+    SHOW_PERFORMANCE_MONITOR: false,
 });
 
 /**

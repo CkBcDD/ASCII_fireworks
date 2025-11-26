@@ -6,7 +6,15 @@
  * Creates a simple FPS and particle count monitor
  * @param {Object} particlePool - ParticlePool instance
  */
-export function createPerformanceMonitor(particlePool) {
+/**
+ * Create and append a performance monitor to the document. The monitor will be created
+ * and will start sampling frame/particle stats no matter what, but its CSS display
+ * can be set to hidden by default so the user can toggle it later.
+ *
+ * @param {Object} particlePool - ParticlePool instance
+ * @param {boolean} defaultVisible - whether to make the monitor visible initially
+ */
+export function createPerformanceMonitor(particlePool, defaultVisible = true) {
     // Create monitor element
     const monitor = document.createElement('div');
     monitor.id = 'performance-monitor';
@@ -24,6 +32,9 @@ export function createPerformanceMonitor(particlePool) {
         min-width: 200px;
         pointer-events: none;
     `;
+    // Ensure only a single monitor instance exists: if found, remove it before appending
+    const existing = document.getElementById('performance-monitor');
+    if (existing) existing.remove();
     document.body.appendChild(monitor);
 
     let frameCount = 0;
@@ -55,6 +66,9 @@ export function createPerformanceMonitor(particlePool) {
 
         requestAnimationFrame(updateMonitor);
     }
+
+    // Honor default visibility
+    monitor.style.display = defaultVisible ? 'block' : 'none';
 
     updateMonitor();
 
